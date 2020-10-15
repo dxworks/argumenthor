@@ -4,7 +4,7 @@ import org.dxworks.argumenthor.config.fields.FieldConfig
 import org.dxworks.argumenthor.config.sources.ConfigurationSource
 import org.dxworks.argumenthor.config.sources.ENV
 
-class Env : ConfigurationSource {
+class EnvSource : ConfigurationSource {
     override fun <T> get(field: FieldConfig<T>): T? {
         return field.parse(System.getenv(getEnvName(field)))
     }
@@ -12,6 +12,4 @@ class Env : ConfigurationSource {
     private fun <T> getEnvName(field: FieldConfig<T>) = field.name.replace(".", "_").toUpperCase()
 
     override val name = ENV
-
-    override fun configure(config: String) {}
 }

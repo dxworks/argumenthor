@@ -2,17 +2,25 @@ package org.dxworks.argumenthor.config
 
 import org.dxworks.argumenthor.config.fields.FieldConfig
 import org.dxworks.argumenthor.config.sources.ConfigurationSource
-import org.dxworks.argumenthor.config.sources.impl.Env
+import org.dxworks.argumenthor.config.sources.impl.ArgsSource
+import org.dxworks.argumenthor.config.sources.impl.EnvSource
+import org.dxworks.argumenthor.config.sources.impl.PropertiesSource
 
 class ArgumenthorConfiguration(
     val fields: List<FieldConfig<*>>
 ) {
-    val sources: MutableMap<String, ConfigurationSource>
+    constructor(vararg fields: FieldConfig<*>) : this(fields.toList())
 
-    init {
-        val env = Env()
-        sources = mutableMapOf(
-            env.name to env
-        )
+    val sources: MutableMap<String, ConfigurationSource> = mutableMapOf()
+
+    fun setDefaultSources() {
+        sources.clear()
+        addSource(ArgsSource())
+        addSource(PropertiesSource())
+        addSource(EnvSource())
+    }
+
+    fun addSource(source: ConfigurationSource) {
+        sources[source.name] = source
     }
 }
