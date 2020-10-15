@@ -18,3 +18,25 @@ dependencies {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = "https://maven.pkg.github.com/dxworks/argumenthor"
+            credentials {
+                username = project.findProperty("gpr.user") as String ?: System.getenv("GITHUB_ACTOR")
+                password =  project.findProperty("gpr.key") as String ?: System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
+    publications {
+        register("jar", MavenPublication) {
+            from(components.java)
+            pom {
+                url.set("https://github.com/dxworks/argumenthor.git")
+            }
+        }
+    }
+}
