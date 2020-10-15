@@ -4,8 +4,8 @@
 
 
 # General IO Folders
-config
-results
+/config
+/results
 
 # Gradle
 .gradle
