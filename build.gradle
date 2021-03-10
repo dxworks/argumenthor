@@ -1,0 +1,102 @@
+plugins {
+    id "java"
+    id 'org.jetbrains.kotlin.jvm' version '1.4.31'
+    id "maven-publish"
+}
+
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+group = "org.dxworks"
+version = "1.0.0-SNAPSHOT"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    testImplementation "org.junit.jupiter:junit-jupiter:5.4.2"
+}
+
+task javadocJar(type: Jar) {
+    archiveClassifier.set('javadoc')
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    archiveClassifier.set('sources')
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+signing {
+    sign configurations.archives
+}
+
+publishing {
+    repositories {
+//        maven {
+//            name = "GitHubPackages"
+//            url = "https://maven.pkg.github.com/dxworks/argumenthor"
+//            credentials {
+//                username = project.findProperty("gpr.user") as String ?: System.getenv("GITHUB_ACTOR")
+//                password = project.findProperty("gpr.key") as String ?: System.getenv("GITHUB_TOKEN")
+//            }
+//        }
+
+        maven {
+            name = "ossrh"
+
+            def releasesRepoUrl = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+            def snapshotsRepoUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+
+            credentials {
+                username = project.findProperty("ossrhUsername") as String ?: System.getenv("OSSRH_USERNAME")
+                password = project.findProperty("ossrhPassword") as String ?: System.getenv("OSSRH_PASSWORD")
+            }
+        }
+    }
+
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = 'argumenthor'
+            from components.java
+            versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
+            pom {
+                name = 'Argumenthor'
+                description = 'A concise description of my library'
+                url = 'https://github.com/dxworks/argumenthor.git'
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'marioRivis'
+                        name = 'Mario Rivis'
+                        email = 'mario.rivis@gmail.com'
+                    }
+                    developer {
+                        id = 'dariusNagy'
+                        name = 'Darius Nagy'
+                        email = 'nagyDarius97@gmail.com'
+                    }
+                }
+            }
+        }
+    }
+}
