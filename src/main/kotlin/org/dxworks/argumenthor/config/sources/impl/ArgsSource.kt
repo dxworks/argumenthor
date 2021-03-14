@@ -10,7 +10,7 @@ class ArgsSource : ConfigurationSource {
     var argNameFormatter: (name: String) -> String =
         { it.split(".").joinToString("", transform = String::capitalize).decapitalize() }
 
-    private var argsList: List<String>? = null
+    var argsList: List<String>? = null
 
 
     override fun <T> get(field: FieldConfig<T>): T? {
