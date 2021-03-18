@@ -47,7 +47,7 @@ publishing {
             url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
 
             credentials {
-                username = project.findProperty("ossrhUsername") as String ?: System.getenv("OSSRH_USERNAME")
+                username = project.findProperty("ossrhUsername") as String ?: System.getenv("OSSRH_USER")
                 password = project.findProperty("ossrhPassword") as String ?: System.getenv("OSSRH_PASSWORD")
             }
         }
@@ -67,7 +67,7 @@ publishing {
             }
             pom {
                 name = 'Argumenthor'
-                description = 'A concise description of my library'
+                description = ''
                 url = 'https://github.com/dxworks/argumenthor.git'
                 licenses {
                     license {
