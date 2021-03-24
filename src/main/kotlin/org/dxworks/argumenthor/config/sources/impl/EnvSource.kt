@@ -7,7 +7,7 @@ import org.dxworks.argumenthor.config.sources.ENV
 class EnvSource(prefix: String = "") : ConfigurationSource {
     constructor() : this("")
 
-    private val prefixString: String = if(prefix.isEmpty()) "" else prefix + "_"
+    private val prefixString: String = if(prefix.isEmpty()) "" else prefix.toUpperCase() + "_"
 
     override fun <T> get(field: FieldConfig<T>): T? {
         return field.parse(System.getenv(getEnvName(field)))
