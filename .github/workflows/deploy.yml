@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - master
+      - release/**
 
 jobs:
   deploy:
@@ -15,8 +16,8 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
-      - name: Publish to GitHub Packages
-        run: gradle clean publish
+      - name: Publish package
+        run: gradle publish
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+          OSSRH_USER: ${{ secrets.OSSRH_USER }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
