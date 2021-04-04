@@ -1,11 +1,12 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.kotlin.jvm' version '1.4.10'
+    id 'org.jetbrains.kotlin.jvm' version '1.4.32'
     id 'maven-publish'
+    id 'signing'
 }
 
-group 'org.dxworks'
-version '1.0-SNAPSHOT'
+group 'org.dxworks.utils'
+version '1.0.0'
 
 repositories {
     mavenCentral()
@@ -21,23 +22,132 @@ test {
     useJUnitPlatform()
 }
 
+task sourceJar(type: Jar) {
+    classifier "sources"
+    from sourceSets.main.allJava
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier "javadoc"
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives jar
+    archives sourceJar
+    archives javadocJar
+}
+
+signing {
+    sign configurations.archives
+}
+
 publishing {
     repositories {
         maven {
-            name = "GitHubPackages"
-            url = "https://maven.pkg.github.com/dxworks/argumenthor"
+            name = "ossrh"
+            def releasesRepoUrl = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+            def snapshotsRepoUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
             credentials {
-                username = project.findProperty("gpr.user") as String ?: System.getenv("GITHUB_ACTOR")
-                password = project.findProperty("gpr.key") as String ?: System.getenv("GITHUB_TOKEN")
+                username = project.findProperty("ossrh.user") as String ?: System.getenv("MAVEN_USERNAME")
+                password = project.findProperty("ossrh.password") as String ?: System.getenv("MAVEN_PASSWORD")
             }
         }
     }
     publications {
-        register("jar", MavenPublication) {
-            from(components.java)
+        mavenJava(MavenPublication) {
             pom {
-                url.set("https://github.com/dxworks/argumenthor.git")
+                name = 'Argumenthor'
+                description = 'A library to help parse arguments from multiple, configurable sources'
+                url = 'https://dxworks.github.io/argumenthor'
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        name = 'Darius Nagy'
+                    }
+                    developer {
+                        name = 'Mario Rivis'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://gitub.com/dxworks/argumenthor.git'
+                    developerConnection = 'scm:git:ssh://gitub.com:dxworks/argumenthor.git'
+                    url = 'http://gitub.com/dxworks/argumenthor'
+                }
+            }
+
+            from components.java
+
+            pom.withXml {
+                def pomFile = file("${project.buildDir}/generated-pom.xml")
+                writeTo(pomFile)
+                def pomAscFile = signing.sign(pomFile).signatureFiles[0]
+                artifact(pomAscFile) {
+                    classifier = null
+                    extension = 'pom.asc'
+                }
+            }
+
+            artifact(sourceJar) {
+                classifier = 'sources'
+            }
+            artifact(javadocJar) {
+                classifier = 'javadoc'
+            }
+
+            // create the signed artifacts
+            project.tasks.signArchives.signatureFiles.each {
+                artifact(it) {
+                    def matcher = it.file =~ /-(sources|javadoc)\.jar\.asc$/
+                    if (matcher.find()) {
+                        classifier = matcher.group(1)
+                    } else {
+                        classifier = null
+                    }
+                    extension = 'jar.asc'
+                }
             }
         }
     }
+}
+
+def customizePom(pom) {
+    pom.withXml {
+        def root = asNode()
+
+        // eliminate test-scoped dependencies (no need in maven central POMs)
+        root.dependencies.removeAll { dep ->
+            dep.scope == "test"
+        }
+
+        // add all items necessary for maven central publication
+        root.children().last() + {
+            resolveStrategy = Closure.DELEGATE_FIRST
+
+
+        }
+    }
+}
+
+
+model {
+    tasks.generatePomFileForMavenJavaPublication {
+        destination = file("$buildDir/generated-pom.xml")
+    }
+    tasks.publishMavenJavaPublicationToMavenLocal {
+        dependsOn project.tasks.signArchives
+    }
+    tasks.publishMavenJavaPublicationToOssrhRepository {
+        dependsOn project.tasks.signArchives
+    }
+}
+
+tasks.withType(GenerateModuleMetadata) {
+    enabled = false
 }
