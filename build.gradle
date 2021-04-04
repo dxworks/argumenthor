@@ -7,6 +7,7 @@ plugins {
 
 group 'org.dxworks.utils'
 version '1.0.0'
+ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 
 repositories {
     mavenCentral()
@@ -20,6 +21,14 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+tasks.withType(GenerateModuleMetadata) {
+    enabled = false
+}
+
+tasks.withType(Sign) {
+    onlyIf { isReleaseVersion && findProperty("signingKey") != null }
 }
 
 task sourceJar(type: Jar) {
@@ -149,8 +158,4 @@ model {
     tasks.publishMavenJavaPublicationToOssrhRepository {
         dependsOn project.tasks.signArchives
     }
-}
-
-tasks.withType(GenerateModuleMetadata) {
-    enabled = false
 }

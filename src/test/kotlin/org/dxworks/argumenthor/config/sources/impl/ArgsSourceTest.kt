@@ -12,7 +12,7 @@ internal class ArgsSourceTest {
     @Test
     fun get() {
         val argsSource = ArgsSource().apply {
-            args = "-arg1Arg2=asd,sdf"
+            args = arrayOf("-arg1Arg2=asd,sdf")
         }
 
         val field = StringListField("arg1.arg2")
