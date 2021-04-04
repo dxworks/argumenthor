@@ -1,0 +1,26 @@
+name: Deploy Snapshot
+
+on:
+  push:
+    tags:
+      - s*
+
+jobs:
+  deploy-snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Java for publishing
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+          server-id: ossrh
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+      - name: Publish package
+          run: gradle publish
+          env:
+            MAVEN_USERNAME: ${{ secrets.OSSRH_USER }}
+            MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+            ORG_GRADLE_PROJECT_signingKey: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+            ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
