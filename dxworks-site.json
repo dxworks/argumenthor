@@ -1,0 +1,16 @@
+{
+  "displayName": "Argumenthor",
+  "relevance": 2,
+  "categories": ["library"],
+  "codeOwners": [
+    {
+      "name": "Mario Rivis"
+    },
+    {
+      "name": "Darius Nagy"
+    }
+  ],
+  "technologies": ["kotlin", "gradle"],
+  "version": "1.0.0",
+  "docs": "https://dxworks.github.io/argumenthor"
+}
