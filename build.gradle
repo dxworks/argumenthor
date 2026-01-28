@@ -1,20 +1,27 @@
 plugins {
-    id 'java'
-    id 'org.jetbrains.kotlin.jvm' version '1.4.32'
+    id 'java-library'
+    id 'org.jetbrains.kotlin.jvm' version '2.3.0'
     id 'maven-publish'
     id 'signing'
 }
 
-group 'org.dxworks.utils'
-version '1.0.0'
+group = 'org.dxworks.utils'
+version = '1.0.0'
 ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 
 repositories {
     mavenCentral()
 }
 
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
 dependencies {
+    implementation platform("org.jetbrains.kotlin:kotlin-bom:2.3.0")
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
+
     testImplementation "org.junit.jupiter:junit-jupiter:5.7.0"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.7.0"
 }
@@ -23,35 +30,12 @@ test {
     useJUnitPlatform()
 }
 
-tasks.withType(GenerateModuleMetadata) {
+tasks.withType(GenerateModuleMetadata).configureEach {
     enabled = false
 }
 
-tasks.withType(Sign) {
+tasks.withType(Sign).configureEach {
     onlyIf { isReleaseVersion && findProperty("signingKey") != null }
-}
-
-task sourceJar(type: Jar) {
-    classifier "sources"
-    from sourceSets.main.allJava
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier "javadoc"
-    from javadoc.destinationDir
-}
-
-artifacts {
-    archives jar
-    archives sourceJar
-    archives javadocJar
-}
-
-signing {
-    def signingKey = findProperty("signingKey")
-    def signingPassword = findProperty("signingPassword")
-    useInMemoryPgpKeys(signingKey, signingPassword)
-    sign configurations.archives
 }
 
 publishing {
@@ -62,17 +46,21 @@ publishing {
             def snapshotsRepoUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
             url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
             credentials {
-                username = project.findProperty("ossrh.user") as String ?: System.getenv("MAVEN_USERNAME")
-                password = project.findProperty("ossrh.password") as String ?: System.getenv("MAVEN_PASSWORD")
+                username = (project.findProperty("ossrh.user") as String) ?: System.getenv("MAVEN_USERNAME")
+                password = (project.findProperty("ossrh.password") as String) ?: System.getenv("MAVEN_PASSWORD")
             }
         }
     }
+
     publications {
         mavenJava(MavenPublication) {
+            from components.java
+
             pom {
                 name = 'Argumenthor'
                 description = 'A library to help parse arguments from multiple, configurable sources'
                 url = 'https://dxworks.github.io/argumenthor'
+
                 licenses {
                     license {
                         name = 'The Apache License, Version 2.0'
@@ -80,12 +68,8 @@ publishing {
                     }
                 }
                 developers {
-                    developer {
-                        name = 'Darius Nagy'
-                    }
-                    developer {
-                        name = 'Mario Rivis'
-                    }
+                    developer { name = 'Darius Nagy' }
+                    developer { name = 'Mario Rivis' }
                 }
                 scm {
                     connection = 'scm:git:git://gitub.com/dxworks/argumenthor.git'
@@ -93,69 +77,13 @@ publishing {
                     url = 'http://gitub.com/dxworks/argumenthor'
                 }
             }
-
-            from components.java
-
-            pom.withXml {
-                def pomFile = file("${project.buildDir}/generated-pom.xml")
-                writeTo(pomFile)
-                def pomAscFile = signing.sign(pomFile).signatureFiles[0]
-                artifact(pomAscFile) {
-                    classifier = null
-                    extension = 'pom.asc'
-                }
-            }
-
-            artifact(sourceJar) {
-                classifier = 'sources'
-            }
-            artifact(javadocJar) {
-                classifier = 'javadoc'
-            }
-
-            // create the signed artifacts
-            project.tasks.signArchives.signatureFiles.each {
-                artifact(it) {
-                    def matcher = it.file =~ /-(sources|javadoc)\.jar\.asc$/
-                    if (matcher.find()) {
-                        classifier = matcher.group(1)
-                    } else {
-                        classifier = null
-                    }
-                    extension = 'jar.asc'
-                }
-            }
         }
     }
 }
 
-def customizePom(pom) {
-    pom.withXml {
-        def root = asNode()
-
-        // eliminate test-scoped dependencies (no need in maven central POMs)
-        root.dependencies.removeAll { dep ->
-            dep.scope == "test"
-        }
-
-        // add all items necessary for maven central publication
-        root.children().last() + {
-            resolveStrategy = Closure.DELEGATE_FIRST
-
-
-        }
-    }
-}
-
-
-model {
-    tasks.generatePomFileForMavenJavaPublication {
-        destination = file("$buildDir/generated-pom.xml")
-    }
-    tasks.publishMavenJavaPublicationToMavenLocal {
-        dependsOn project.tasks.signArchives
-    }
-    tasks.publishMavenJavaPublicationToOssrhRepository {
-        dependsOn project.tasks.signArchives
-    }
+signing {
+    def signingKey = findProperty("signingKey")
+    def signingPassword = findProperty("signingPassword")
+    useInMemoryPgpKeys(signingKey, signingPassword)
+    sign publishing.publications.mavenJava
 }
