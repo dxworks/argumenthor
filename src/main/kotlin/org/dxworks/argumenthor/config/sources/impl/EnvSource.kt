@@ -4,6 +4,16 @@ import org.dxworks.argumenthor.config.fields.FieldConfig
 import org.dxworks.argumenthor.config.sources.ConfigurationSource
 import org.dxworks.argumenthor.config.sources.ENV
 
+/**
+ * Configuration source that reads values from environment variables.
+ *
+ * Field names are converted to environment variable format: dots become underscores,
+ * and the name is uppercased. An optional prefix can be added to all variable names.
+ *
+ * Example: field "db.host" with prefix "APP" becomes "APP_DB_HOST".
+ *
+ * @param prefix Optional prefix for environment variable names.
+ */
 class EnvSource(prefix: String = "") : ConfigurationSource {
     constructor() : this("")
 
