@@ -9,23 +9,23 @@ Argumenthor is a Kotlin library for parsing configuration values from multiple s
 ## Build Commands
 
 ```bash
-mvn clean verify    # Build and run tests
-mvn test            # Run tests only
-mvn install         # Install to local ~/.m2
+./mvnw clean verify    # Build and run tests
+./mvnw test            # Run tests only
+./mvnw install         # Install to local ~/.m2
 ```
 
 ## Release Workflow
 
 - **Snapshots**: Auto-published on push to `main` branch
-- **Releases**: Triggered by pushing a `v*` tag (e.g., `v1.0.1`)
+- **Releases**: Triggered by pushing a `v*` tag (e.g., `v1.1.0`)
 
-To release:
-1. Update version in `pom.xml` (remove `-SNAPSHOT`)
-2. Commit: `git commit -am "Release 1.0.1"`
-3. Tag: `git tag v1.0.1`
-4. Push: `git push && git push --tags`
-5. Bump to next snapshot in pom.xml: `<version>1.0.2-SNAPSHOT</version>`
-6. Commit & push
+To release (version is automatically taken from tag):
+```bash
+git tag v1.1.0
+git push --tags
+```
+
+The CI workflow extracts the version from the tag (strips the `v` prefix) and publishes to Maven Central.
 
 ## Architecture
 
